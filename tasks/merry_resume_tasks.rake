@@ -1,4 +1,33 @@
-namespace :merryresume do
+namespace :merryresume do  
+  
+  desc "clean up resumes not processable"
+  task :clean => :environment do
+    
+    body = ""
+    
+    resumes = Resume.find(:all, :conditions => "content IS NULL")
+    body << "*Nb of resumes cleaned up* : #{resumes.size}\n\n"  
+    
+    for resume in resumes
+      body << "* *#{resume.paper_file_name}*\n"
+      resume.paper_processed_at = Time.now
+      resume.content = "EMPTY"
+      resume.save
+    end
+    
+    if resumes.size > 0      
+      message = {
+        :recipient => "admin",
+        :subject => "Resumes cleaned up",
+        :body => body
+      }
+      
+      puts "MESSAGE : #{message.inspect}"
+      Batman.deliver_notifier(message)
+    end
+
+    
+  end
   
   desc "process resumes"
   task :process => :environment do
