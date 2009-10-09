@@ -41,7 +41,7 @@ namespace :merryresume do
     resumes_not_processed = []
     
     for resume in resumes
-      body << "* *#{resume.paper_file_name}*\n"
+      body << "* *#{resume.paper_file_name}* (#{resume.paper.content_type})\n"
       
       if resume.paper.reprocess!
         resume.fill_content_with_paper_attached
