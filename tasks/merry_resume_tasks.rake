@@ -1,18 +1,27 @@
 namespace :merryresume do  
   
+  desc "Cloudify all resumes"
+  task :cloudify => :environment do
+    resumes = Resume.all
+    for resume in resumes
+      resume.fill_clouds
+      resume.save
+    end
+  end
+  
   desc "clean up resumes not processable"
   task :clean => :environment do
     
     body = ""
     
-    resumes = Resume.find(:all, :conditions => "content IS NULL")
+    resumes = Resume.find(:all, :conditions => ["content like ?", "%BROKEN%"])
     body << "*Nb of resumes cleaned up* : #{resumes.size}\n\n"  
     
     for resume in resumes
       body << "* *#{resume.paper_file_name}*\n"
       resume.paper_processed_at = Time.now
       resume.content = "EMPTY"
-      resume.save
+      resume.save(false)
     end
     
     if resumes.size > 0      
@@ -24,9 +33,7 @@ namespace :merryresume do
       
       puts "MESSAGE : #{message.inspect}"
       Batman.deliver_notifier(message)
-    end
-
-    
+    end  
   end
   
   desc "process resumes"
@@ -43,8 +50,12 @@ namespace :merryresume do
     for resume in resumes
       body << "* *#{resume.paper_file_name}* (#{resume.paper.content_type})\n"
       
+      puts "RESUME : #{resume.paper_file_name}"
+      puts "RESUME REPROCESS : #{resume.paper.reprocess!}"
+      
       if resume.paper.reprocess!
         resume.fill_content_with_paper_attached
+        puts "RESUME CONTENT : #{resume.content}"
         resume.save
         
         body << "** processed_at : #{resume.paper_processed_at}\n"
@@ -55,6 +66,10 @@ namespace :merryresume do
           resumes_not_processed << resume
           body << "** *CONTENT IS NULL*\n"
         end
+      else
+        resume.content = "BROKEN"
+        resume.paper_processed_at = Time.now
+        resume.save(false) # don't perform validations
       end
     end
     
