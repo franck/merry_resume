@@ -31,7 +31,7 @@ namespace :merryresume do
         :body => body
       }
       
-      puts "MESSAGE : #{message.inspect}"
+      puts "MESSAGE : #{message.inspect}" 
       Batman.deliver_notifier(message)
     end  
   end
@@ -49,13 +49,9 @@ namespace :merryresume do
     
     for resume in resumes
       body << "* *#{resume.paper_file_name}* (#{resume.paper.content_type})\n"
-      
-      puts "RESUME : #{resume.paper_file_name}"
-      puts "RESUME REPROCESS : #{resume.paper.reprocess!}"
-      
+            
       if resume.paper.reprocess!
         resume.fill_content_with_paper_attached
-        puts "RESUME CONTENT : #{resume.content}"
         resume.save
         
         body << "** processed_at : #{resume.paper_processed_at}\n"
